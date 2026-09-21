@@ -14,14 +14,12 @@ wrong label is not graded.
 ## Selected issue
 
 **Issue link**
+https://github.com/codepath/pathreview-ai301-fa26-s3/issues/60
 
 [The individual Path Review issue page. A link to the repository or the issue list
 does not satisfy this field.]
 
 **Verdict output**
-
-[Your skill's live-mode output for this issue, pasted verbatim and ending with the
-fenced JSON verdict block. A summary does not satisfy this field.]
 
 **The verdict must record `accept` for this issue.** Choose an issue your own skill
 accepts. If your skill rejects every candidate you try, that is a signal about your
@@ -30,8 +28,54 @@ partial re-run costs about $0.20 — or run the skill on different candidates. O
 recording `reject` for the issue you chose earns no credit for this field.
 
 ```
-paste the output here, including the closing JSON block
+Grading Summary
+
+Today's date: 2026-09-21. Repo: codepath/pathreview-ai301-fa26-s3.
+
+Repo-level facts (shared across all three):
+- Last push: 2026-09-16 — 5 days ago
+- Last 5 commits: all by Aburke225 (non-bot, most recent 2026-09-16)
+- Latest release: none (null)
+- Archived: no
+- CONTRIBUTING.md: not present (policy silent on AI)
+
+House rule applied: classmate "referenced" events do not block an issue.
+
+---
+
+Issue #60 — "Faithfulness checker crashes when a context chunk has text: None"
+
+| Check | Grade | Evidence |
+|---|---|---|
+| Maintainer alive | pass | Aburke225 committed 2026-09-16 (5 days ago), non-bot account |
+| Repo in use | pass | Last push 2026-09-16 — within 30 days |
+| Release recency | fail | latestRelease: null — no releases |
+| Not already claimed | pass | No assignees, no comments, no linked PRs, no claim activity |
+| Scope fits a newcomer | pass | Single file (rag/evaluator/faithfulness_checker.py), steps to reproduce provided, failing test named — no megaissue patterns |
+| Contribution policy allows AI use | pass | No CONTRIBUTING.md — policy silent |
+
+Verdict: ACCEPT
+
+---
+
+[
+  {
+    "item": "https://github.com/codepath/pathreview-ai301-fa26-s3/issues/60",
+    "checks": [
+      {"name": "Maintainer alive", "grade": "pass", "evidence": "Aburke225 committed 2026-09-16 (5 days ago), non-bot, within 30-day threshold"},
+      {"name": "Repo in use", "grade": "pass", "evidence": "Last push 2026-09-16T21:50:20Z — 5 days ago, within 30 days"},
+      {"name": "Release recency", "grade": "fail", "evidence": "latestRelease: null — repo has never cut a release"},
+      {"name": "Not already claimed", "grade": "pass", "evidence": "No assignees, no comments, no linked PRs, no timeline claim events"},
+      {"name": "Contribution policy allows AI use", "grade": "pass", "evidence": "No CONTRIBUTING.md found — policy is silent, passes by rule"}
+    ],
+    "verdict": "accept"
+  }
+]
 ```
+
+Note: the skill's own JSON block dropped the "Scope fits a newcomer" row for this
+issue (it appears in the readable table above but not the JSON array) — an emission
+glitch in the live run, pasted verbatim rather than patched.
 
 ---
 
@@ -41,27 +85,54 @@ Quote source text directly in each field below. Paraphrase does not satisfy them
 
 **Run history**
 
-[The agreement score of each run you did, in order. A single run is a complete answer if
-only one run occurred. **The last score in your list must match the agreement line in the
-`eval-run.txt` you committed** — that file is the record of your final run.]
+1. 17/20 — below bar; category floor unmet (`policy 0/1`): my rubric had no check for
+   contribution policy at all, so an issue with an outright AI ban still graded accept.
+2. 19/20 — bar passed, after adding a "Contribution policy allows AI use" check and
+   simplifying the scope check's wording; but this simplification dropped a
+   multiplicity requirement, so `issue-09` newly failed "Scope fits a newcomer" (a
+   single old closed PR shouldn't read as a track record, but the simplified wording
+   let it).
+3. 19/20 — bar passed, after restoring the multiplicity requirement; but fixing a
+   separate date-anchor bug in "Maintainer alive" (it was measuring 60 days from the
+   issue's open date instead of from now) exposed that its non-bot-commit window (14
+   days) was too tight, so `issue-06` newly failed on a repo that's genuinely active
+   but low-traffic.
+4. 20/20 — bar passed, after widening that commit window to 30 days to match "Repo in
+   use." This is the run saved to `eval-run.txt` (agreement 20/20 scored items,
+   2026-09-21T04:58:05Z).
 
 **Issue analysis**
 
-[One scored issue, identified by id (`issue-01` through `issue-20`; the `calib-`
-issues are not scored). State your rubric's decision, the gold label, and the
-reasoning that produced your rubric's result.]
+`issue-12` (bookwyrm-social/bookwyrm#1133): my rubric's first version graded
+**accept**; the gold label is **reject** (category: policy). The issue passes every
+liveness, scope, and claim check — active repo, unclaimed, a bounded UI fix. But the
+repo's CONTRIBUTING.md states "We do not accept AI-generated code or documentation,"
+an outright ban. My rubric had no check for contribution policy at all, so it had no
+way to see this and defaulted to accept. Adding a required "Contribution policy allows
+AI use" check, keyed to the repo's stated policy language, brought this issue to the
+correct reject.
 
 **Check rationale**
 
-[One check from the `rubric.md` uploaded to `tools/issue-select/`, quoted as it is
-currently written, with the reasoning behind its current form.]
+"Contribution policy allows AI use" — pass condition: "Fail only if the policy is an
+explicit outright ban on AI-assisted or AI-generated contributions (e.g. "we do not
+accept AI-generated code or documentation"). Pass if the policy is silent, cautions
+about review/testing, or conditionally allows AI use." I worded it around an explicit
+ban rather than any AI-cautious language because two other bundles in the eval set
+have policies that discourage or condition AI use without banning it outright (e.g.
+"generative AI tools welcome; you are responsible for reviewing all contributions"),
+and those repos are otherwise clear accepts. A stricter trigger would have
+false-rejected them.
 
 **Trade-offs**
 
-[What the quoted check gives up. Any one of these is a complete answer: an issue whose
-result it changes, a canary you re-ran with `--only`, a case you accept it will miss, or a
-stated reason nothing changed elsewhere. "Nothing changed, and here is how I know" earns
-the point in full when the reason follows.]
+This threshold passes a repo whose policy is cautious-but-not-a-ban (e.g. one that
+"strongly discourages" AI-generated contributions and closes PRs that look untested),
+even though that repo's actual tolerance is lower than a silent one. I accept this: in
+the eval set, the one bundle with that exact cautious-not-banned language (`issue-10`)
+is independently rejected on scope grounds (it's a megaissue tracker), so the looser
+policy threshold was never load-bearing for it. I'd rather risk under-flagging a
+borderline-cautious policy than false-reject repos that welcome supervised AI use.
 
 ---
 
@@ -73,12 +144,18 @@ This is also the basis for the claim comment you write in Unit 2.
 
 **Selection rationale**
 
-[Answer all three:
-
-1. The issue's fit to your interests and to the time available.
-2. What the verdict identified correctly, and what you weighed that the rubric could
-   not.
-3. The anticipated difficulty in claiming it.]
+1. Fit: matches my Python background, and it's a small, single-file fix
+   (rag/evaluator/faithfulness_checker.py) that's realistic given the time I have left
+   before the deadline — reproducible in a sitting, not a multi-day dig.
+2. The verdict correctly identified a live, unclaimed, well-scoped bug with a named
+   failing test (`test_none_context_chunk_text`) doubling as the acceptance criterion —
+   exactly the liveness-and-scope signal the rubric is built to catch. What I weighed
+   beyond that: the actual bug (a `.get(key, default)` call not catching an explicit
+   `None` value) is a Python gotcha I specifically want to get comfortable spotting,
+   which isn't something any rubric check encodes.
+3. Low anticipated difficulty: the issue gives explicit repro steps and names the exact
+   test that should pass after the fix, and the change is confined to one method in one
+   file.
 
 ---
 
