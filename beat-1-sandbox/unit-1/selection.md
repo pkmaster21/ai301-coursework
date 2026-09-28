@@ -81,8 +81,6 @@ glitch in the live run, pasted verbatim rather than patched.
 
 ## Eval iterations
 
-Quote source text directly in each field below. Paraphrase does not satisfy them.
-
 **Run history**
 
 1. 17/20 — below bar; category floor unmet (`policy 0/1`): my rubric had no check for
@@ -137,10 +135,6 @@ borderline-cautious policy than false-reject repos that welcome supervised AI us
 ---
 
 ## Selection rationale
-
-Graded on whether all three are answered, in your own words. Not on how good the
-reasoning is, and not on length — a short honest answer to each earns the full marks.
-This is also the basis for the claim comment you write in Unit 2.
 
 **Selection rationale**
 
