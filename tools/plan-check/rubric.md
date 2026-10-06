@@ -1,0 +1,20 @@
+# Rubric: is this plan ready to post and build from?
+
+## Checks
+
+| Check | Evidence | Pass condition | Weight |
+|---|---|---|---|
+| diagnosis-matches-evidence | The candidate plan's stated cause (its diagnosis), read against every step and control run in the Repro evidence section. | Passes if the plan names a specific cause of the bug and no step or control in the repro evidence contradicts it or rules it out (for example, a control run where the blamed component is absent or unchanged and the bug still appears, or where it is present and the bug does not). Fails if the cause is missing, is only a restated symptom, or is contradicted by the repro evidence, even when the thread or the plan states it confidently. | required |
+| within-issue-scope | The candidate plan's scope and files-to-change statements, read against the Issue and the Repro evidence. | Passes if the plan names where it will change things (specific files, or one specific code path within a named module or package, such as "the reattach path in `zellij-server`'s client connection handling"), says what it will not change, and every planned change is needed to fix the reproduced bug. The named locations do not have to appear in the repro evidence. Fails if no location is named or the location is left open ("somewhere", "the codebase", a list of candidates with none chosen), or if the plan bundles work the issue never asked for (drive-by refactors, dependency or framework migrations, new options or settings, UI rework, or a redesign around the fix). | required |
+| test-targets-cause | The candidate plan's test plan, read against its diagnosis and the Repro evidence steps. | Passes if the test plan re-runs the repro (or an equivalent check) and names an observable expected result after the fix (specific output, exit code, value, or visible behavior) that would be different if the stated cause were still present. The test does not have to be automated. Fails if it only says to run the existing suite, only checks a symptom or a mechanism the diagnosis does not name, or describes the outcome vaguely ("should feel fast", "nothing should break"). | required |
+| stranger-could-start | The candidate plan's approach and files-to-change statements. | Passes if a contributor who has never seen the issue could begin the edit from the plan alone: one chosen approach, at a named location (a file, or a specific code path in a named module), with no core decision left open. Leaving the exact function or line to be pinned during the build is fine when the approach and the code path are already chosen. Fails if the approach is "investigate", "profile", or "somewhere in", or defers the key choice to build time ("upstream or vendored, whichever is easier", "X? Y? not sure"). Named risks or unknowns are fine as long as the chosen approach does not depend on resolving them first. | required |
+| comment-follows-thread-and-policy | The candidate plan comment, read against the Thread highlights and the Repo facts block (contributing and AI-use policy). | Passes if the comment engages any explicit maintainer direction in the thread (follows it, or says why not) and includes every disclosure the repo's stated policy requires, including AI-use disclosure when the policy asks for it. Passes by default if the thread has no maintainer direction and the repo states no such policy. Fails if the comment ignores explicit maintainer direction or omits a required disclosure. | required |
+| unknowns-named | The candidate plan's risks or unknowns statement. | Passes if the plan names at least one real risk or unknown specific to this change and how it will be checked, rather than presenting every assumption as certain. | preferred |
+
+## Verdict rule
+
+Accept (ready) only if every required check passes. Any required check
+graded fail holds the package (reject). An unclear (`?`) grade on a
+required check also holds the package, because the plan has not shown
+what the check needs. Preferred checks are reported but never change
+the verdict.
