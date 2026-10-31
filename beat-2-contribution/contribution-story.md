@@ -1,4 +1,4 @@
-# Contribution: [Issue Title]
+# Contribution: Studio: remove dead code and a developer-local path
 
 Path: `beat-2-contribution/contribution-story.md`
 
@@ -8,10 +8,9 @@ format criteria grade exactly that. Your course repo link is the whole submissio
 files and no evidence uploads are part of Assignment 5.
 
 **Contribution Number:** [1]
-**Student:** [Student name]
-**GitHub Username:** [your GitHub username, exactly as it appears on your profile - no @, no
-profile URL. Your comments upstream are identified by this name.]
-**Issue:** [GitHub issue link]
+**Student:** David Zhao
+**GitHub Username:** pkmaster21
+**Issue:** https://github.com/AlphaWaveSystems/flutter-probe/issues/401
 **Pull Request:** [GitHub PR link, once opened]
 
 One repository, built across units 5 to 8, telling the whole story of your real
@@ -67,11 +66,18 @@ maintainer reply ever; a cross-link comment had bumped its update date
 past my 30-day filter, so I dropped it and now check myself that a
 maintainer opened or answered an issue before trusting a pick.
 
-**Unit 6: [one line on the tool work]**
+**Unit 6: Installed the voice guard and wrote a memory file for flutter-probe**
 
-[2-4 sentences: the voice-guard, the repo-memory file. What broke or
-fell short, and what changed because of it. "Nothing broke" counts when
-it is true - say how you know.]
+I added an Upstream section to my voice guide (claims, questions,
+pings) and installed the guard as a hook, and it did its job: it
+stopped one version of my claim that had lost its check-in line, quoting
+my own claim rule back at me. One gap: on its first run, repro-check
+reported it couldn't find my voice guide even though the symlink worked,
+so the guard was the only check on my claim against my rules; the second
+run found it. My
+`CLAUDE.local.md` records the one setup trap I hit: `go vet` in
+`studio/` fails until the frontend is built, because `main.go` embeds
+`frontend/dist`.
 
 **Unit 7: [one line on the tool work]**
 
@@ -87,24 +93,56 @@ drafted, what you did with the draft.]
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs in your own words: how you searched, what your scan
-surfaced, what your scout's verdict said, why this issue fits your
-profile, and what you hope to learn. If your scout's verdict on it
-was reject and you chose it anyway, say so here and say why; choosing
-against your own tool silently is what loses points. Close with an
-honest read of the tool itself: where the scout fell short on a real
-wild search and what you changed or would change, or what convinced
-you it held up. **Record the link to your claim comment in this section too.**
-Not claimed yet? Write `claim pending` and today's date where the link goes,
-and add the link the moment your claim lands.]
+I found this issue through the Issue Selection site. It's a pretty
+straightforward and simple change, which lets me learn the entire flow
+of contributing to open source (claim, reproduce, plan, PR, review)
+without the code being the hard part. I wanted to get comfortable first
+before moving on to more difficult issues. I also hope to learn how a
+real project's checks, sign-off rules, and changelog fit together, and
+to get more comfortable reading Go I didn't write.
+
+My scout's scan graded five issues and accepted two, but I passed on
+both: code-charity/youtube#2600 is a 2024 feature request that no
+maintainer has responded to (the repo is active, but nobody had signed
+off on that feature, and a commenter linked a near-duplicate), and
+csesnitw/internito#39 was a one-line footer text change.
+I graded this issue and a second site pick
+(philaconvalley/website#130, a fullscreen button) with the scout. Both
+were accepted; after the unit 6 scope patch, the difficulty notes came
+back straightforward for this one and moderate for #130. The scout
+ranked #130 higher on fit because it's TypeScript and this issue is
+mostly Go, but I chose this one anyway for the reasons above.
+
+I would say the scout is definitely useful, but it has limitations that
+can be improved. Its rubric checks whether the repo is active, not
+whether a maintainer has ever engaged with the issue itself, which is
+how youtube#2600 passed. Its search also surfaced a lot of issues that
+already had discussion and fixes in progress: three of the five it
+graded were already claimed in a comment or an open PR, which my
+filters couldn't see. The rubric caught all three, and its grading held
+up well overall: on this issue it caught that one of the three items
+had already been fixed upstream (#477), which I confirmed in the file's
+history and put in my claim.
+
+**Claim comment:** https://github.com/AlphaWaveSystems/flutter-probe/issues/401#issuecomment-6536807923
 
 **Toolkit**
 
-- Tool: issue-scout (your scout: your search strategy, your rubric),
-  and how you used it
-- What it produced: [the scan and its verdict on this issue, described]
-- Difficulties: [where it fell short, or "none met" if none did]
-- What changed: [what you patched or would update, or "nothing"]
+- Tool: issue-scout (my search strategy and rubric). I ran one scan,
+  then graded my two Issue Selection site picks directly, and re-graded
+  both after the scope patch.
+- What it produced: a scan of 387 ranked results with five graded
+  (two accepts, three rejects for "already claimed"); an accept for
+  this issue on all 8 required checks with a "straightforward"
+  difficulty note, plus the finding that the `go.mod` item was already
+  done.
+- Difficulties: three of five scan slots went to issues claimed
+  through comments or linked PRs, and one accept was a feature request
+  no maintainer had ever responded to.
+- What changed: added `-linked:pr` to every query and moved the stale
+  `--updated` date forward; replaced my "Bounded scope" check with the
+  scope-feasible row and added the difficulty note. I'd still add a
+  check for whether a maintainer has ever engaged with the issue.
 
 ---
 
@@ -139,31 +177,62 @@ and add the link the moment your claim lands.]
 
 **Environment Setup**
 
-[What a stranger would need to stand this up: your operating system,
-the relevant versions (language, runtime, package manager, the project
-itself), and how you set the project up. Then the challenges you faced
-and how you solved them, or that none came up.]
+macOS 27.0.1 (Apple Silicon), Go 1.27.3 (the repo requires 1.26.10 or
+newer), Node v26.0.0, npm 11.12.1. I forked the repo to
+pkmaster21/flutter-probe, cloned my fork, and worked from `main` at
+26716d5. I didn't have Go, so I installed it with Homebrew.
+
+One challenge: my first `go vet ./...` in `studio/` failed with
+`main.go:13:12: pattern all:frontend/dist: no matching files found`.
+`studio/main.go` embeds the built frontend, so the frontend has to be
+built first. Running `npm ci && npm run build` in `studio/frontend`
+before `go vet` fixed it.
 
 **Steps to Reproduce**
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. Search the repo for callers of `discoveryContext`:
+   `grep -rn "discoveryContext" . --exclude-dir=node_modules --exclude-dir=.git`.
+   Only match: its own definition at `studio/wifi_discovery.go:127`.
+2. Search the repo for anything importing `app.css`:
+   `grep -rn 'app\.css' . --exclude-dir=node_modules --exclude-dir=.git`.
+   No matches; `studio/frontend/src/main.ts` imports only `./style.css`.
+3. Look for the commented-out `replace` in `studio/go.mod`:
+   `grep -n replace studio/go.mod`. Only the live
+   `replace github.com/alphawavesystems/flutter-probe => ..` on line 8.
+4. Run the issue's acceptance checks on unchanged `main`:
+   `npm run build` in `studio/frontend` (exit 0, chunk-size warning
+   only), then `go vet ./...` in `studio/` (exit 0).
 
 **Reproduction Evidence**
 
-- **Commit showing reproduction:** [link to commit in your fork]
-- **Screenshots/logs:** [if applicable]
-- **My findings:** [what you discovered during reproduction; an
-  honest, evidenced cannot-reproduce that led you to re-pick or ask
-  the maintainer belongs here and costs you nothing]
+- **Commit showing reproduction:** none
+- **Screenshots/logs:** grep and build results above;
+  [e958c3d](https://github.com/AlphaWaveSystems/flutter-probe/commit/e958c3dfb9e779c3b60717337c68986dd5e33d5d)
+  (#477) is the upstream commit that removed the `go.mod` line.
+- **My findings:** 2 of the 3 leftovers are still on `main`:
+  `discoveryContext` has no callers and `app.css` is imported by
+  nothing (it's leftover Wails template CSS like `#logo` and
+  `.input-box`). The third, the commented-out `wails/v2` `replace` line
+  pointing at a local module cache, was removed in #477 on 2026-10-25,
+  after the issue was opened, so my change covers only the first two.
+  Both acceptance checks already pass, so a failure after my change
+  would come from my change. `go vet` doesn't report unused functions,
+  so grep is the real check that `discoveryContext` is gone.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: repro-check, which graded my claim draft alone and then my
+  claim plus repro report together before I moved the report here.
+- What it produced: accept on both runs; on the second it verified
+  each finding against upstream `main`, including that e958c3d removed
+  the `go.mod` line.
+- Difficulties: it reported that it couldn't find my voice guide (the
+  file is a symlink), so its voice notes didn't come from my rules
+  until the second run. It also flagged that I summarized grep output
+  instead of pasting it.
+- What changed: I relied on the voice guard's direct check for my
+  rules, and I'll paste raw command output in `test_evidence.md` for
+  the PR.
 
 ---
 
