@@ -11,7 +11,7 @@ files and no evidence uploads are part of Assignment 5.
 **Student:** David Zhao
 **GitHub Username:** pkmaster21
 **Issue:** https://github.com/AlphaWaveSystems/flutter-probe/issues/401
-**Pull Request:** [GitHub PR link, once opened]
+**Pull Request:** https://github.com/AlphaWaveSystems/flutter-probe/pull/519
 
 One repository, built across units 5 to 8, telling the whole story of your real
 contribution. Fill it as you work, not at the end — the sections below ask for evidence that
@@ -79,10 +79,18 @@ run found it. My
 `studio/` fails until the frontend is built, because `main.go` embeds
 `frontend/dist`.
 
-**Unit 7: [one line on the tool work]**
+**Unit 7: Wrote a ship manifest and got my PR through the ship-gate**
 
-[2-4 sentences: the ship-gate and your gate manifest. What it produced
-on your real branch, what fought you, what changed because of it.]
+My manifest started with four checks from the issue, the PR template,
+and the Studio CI file, and all four passed on `main` before I changed
+anything. On my branch, the gate ran them fine, but my pr-precheck
+rejected the first run: CONTRIBUTING.md also asks for `make test` and
+`flutter test`, and it couldn't see my DCO sign-off. I added `make test`
+to the manifest, moved `flutter test` to the excluded table with a dated
+reason (my PR touches no Dart), and put the evidence in the PR, and it
+passed; my voice guard then caught two lines in the description that
+claimed more than my pasted evidence showed or left out that I'd
+reviewed the code.
 
 **Unit 8: [one line on the tool work]**
 
@@ -150,26 +158,45 @@ history and put in my claim.
 
 **Problem Description**
 
-[In your own words, what is broken or missing?]
+Nothing is broken for users. `studio/`, the FlutterProbe desktop app,
+carries leftovers that make the code harder to read: a Go helper
+function nothing calls, a CSS file nothing imports, and (when the issue
+was filed) a commented-out `go.mod` line pointing at one developer's
+local module cache.
 
 **Expected Behavior**
 
-[What should happen?]
+All three leftovers are gone, a search finds no remaining references,
+and `go vet ./...` in `studio/` and `npm run build` in
+`studio/frontend` still pass.
 
 **Current Behavior**
 
-[What actually happens?]
+On `main`, `discoveryContext` is still defined in
+`studio/wifi_discovery.go` with no callers, and
+`studio/frontend/src/app.css` still exists with nothing importing it.
+The `go.mod` line was already removed upstream in #477. Both checks
+pass today.
 
 **Affected Components**
 
-[Which parts of the codebase are involved?]
+- `studio/wifi_discovery.go` (the `discoveryContext` function and the
+  `time` import only it uses)
+- `studio/frontend/src/app.css`
+- `CHANGELOG.md` at the repo root (the PR template requires an entry)
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: Claude Code with my `CLAUDE.local.md`, used for one scoped
+  read of `studio/` (the files the issue names, `main.go`, and
+  `main.ts`) instead of the whole repo.
+- What it produced: the short list of files above, plus two facts the
+  issue doesn't mention: `discoveryContext` is the only use of the
+  `time` import, and `main.go` embeds the built frontend.
+- Difficulties: `go vet` doesn't flag unused functions, so it can't
+  confirm the dead code is dead; grep had to.
+- What changed: I added the `time` import to the plan so removing the
+  function doesn't break the build.
 
 ---
 
@@ -240,93 +267,235 @@ before `go vet` fixed it.
 
 **Analysis**
 
-[Your analysis of the root cause: what is causing the issue, traced
-to the files and functions involved.]
+Both remaining leftovers were dead from the commit that added them.
+`discoveryContext` in `studio/wifi_discovery.go` arrived with the mDNS
+WiFi discovery feature (#86, 2026-05-02), but `wifiDiscovery.Start()`
+in that same commit builds its context directly with
+`context.WithCancel(context.Background())`, so the helper never had a
+caller. It is also the only code in the file that uses the `time`
+package. `studio/frontend/src/app.css` arrived with the Studio beta
+(#77, 2026-04-26) and holds Wails starter-template styles (`#logo`,
+`.result`, `.input-box`); `main.ts` has only ever imported
+`./style.css`. The third item, the commented-out `wails/v2` `replace`
+in `studio/go.mod`, was already removed in #477.
 
 **Proposed Solution**
 
-[High-level description of your fix approach, and what you are
-deliberately NOT changing.]
+Delete the dead function and the now-unused `time` import, delete
+`app.css`, and add one line to the root `CHANGELOG.md` under
+`[Unreleased]`. I'm deliberately not changing the live
+`replace github.com/alphawavesystems/flutter-probe => ..` in
+`studio/go.mod` (it's in use and documented), `style.css`, or anything
+else in `wifi_discovery.go`. No tests are added: deleting uncalled code
+changes no behavior, so the evidence is a search showing no references
+plus the existing checks passing.
 
 **Implementation Plan**
 
-1. [Modify file X to do Y]
-2. [Add or change Z]
-3. [Update tests]
+1. Branch from `main`: `fix/401-studio-dead-code`. (Deviation: I named the branch `fix/studio-dead-code` instead; CONTRIBUTING only asks for a descriptive name.)
+2. In `studio/wifi_discovery.go`, delete `discoveryContext` and its
+   comment, and remove `"time"` from the imports. Run `gofmt`.
+3. Delete `studio/frontend/src/app.css`.
+4. Add a `### Removed` entry under `## [Unreleased]` in `CHANGELOG.md`.
+5. Re-run the searches, limited so my own CHANGELOG line can't match:
+   `git grep -n discoveryContext -- studio/` and `git grep -n "app\.css" -- studio/`
+   should both print nothing; then run the manifest checks: `npm ci && npm run build`, then
+   `go vet ./...`, `go build ./...`, `go test ./...` in `studio/`.
+6. Commit with `git commit -s` (DCO sign-off).
 
-[Record deviations here as they happen: what changed mid-build and
-why. A recorded deviation is honest work; silent drift is not.]
+Deviation (2026-10-30): the plan only limited the `app.css` search to
+`studio/`. On the branch, a repo-wide `git grep discoveryContext`
+matched my own CHANGELOG line, the same trap plan-check caught for
+`app.css`, so I limited that search to `studio/` too. I also added
+`ls studio/frontend/src/app.css` before and after, because the `app.css`
+reference search prints nothing on `main` either and so proves nothing
+on its own.
+
+
+**Baseline evidence (on `main` at 26716d5, 2026-10-30)**
+
+```
+$ git grep -n discoveryContext
+studio/wifi_discovery.go:127:func discoveryContext(parent context.Context) (context.Context, context.CancelFunc) {
+$ git grep -n "app\.css" -- studio/
+(no output, exit 1)
+$ cd studio/frontend && npm run build
+✓ built in 2.63s   (exit 0; only warning: "Some chunks are larger than 500 kB after minification")
+$ cd studio && go vet ./...
+(no output, exit 0)
+```
+
+**Risks and unknowns**
+
+- A repo-wide search for `app.css` would match my own CHANGELOG entry,
+  so the after-check searches `studio/` only.
+- `go vet`, `go build`, and `go test` in `studio/` fail until the
+  frontend is built (`main.go` embeds `frontend/dist`), so the
+  frontend build runs first in every check.
+- `go vet` doesn't report unused functions, so it can't prove
+  `discoveryContext` is gone; the `git grep` is that check.
+- The maintainer may prefer a different CHANGELOG section for a
+  cleanup; I'll use `### Removed` and adjust if asked.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: plan-check, grading `plan.md` and a draft plan comment
+  together (the comment stays unposted; my PR carries it).
+- What it produced: reject (hold) on the first run, because neither
+  draft showed any baseline output and the plan named no risks; accept
+  on the second.
+- Difficulties: it caught a real bug in my test plan: a repo-wide
+  search for `app.css` would have matched my own CHANGELOG line. It
+  also couldn't find my voice guide (the symlink again), expected the
+  comment in `comment.md`, and has no idea what "repro evidence" means
+  for a cleanup issue with no bug.
+- What changed: I pasted the real baseline output into the plan,
+  added a risks section, and limited the `app.css` search to `studio/`.
 
 ---
 
 ## Testing Strategy
 
-[What observable checks prove the fix: your reproduction steps re-run
-against the built change (before and after), and the repo's own test
-suite or checks with the outcome shown. "Tests pass" with nothing
-observable named is not a strategy.]
+The change only deletes code nothing uses, so there's no new behavior
+to test. Instead, three things have to be observable:
+
+1. **The leftovers are gone.** Before the fix, on `main` at 26716d5,
+   `git grep -n discoveryContext -- studio/` prints the definition at
+   `studio/wifi_discovery.go:127` and `ls studio/frontend/src/app.css`
+   finds the file. After the fix, on `fix/401-studio-dead-code`, the
+   grep prints nothing (exit 1) and `ls` reports "No such file or
+   directory". Both searches are limited to `studio/` because my
+   CHANGELOG line names both items.
+2. **Nothing referenced them.** `git grep -n "app\.css" -- studio/`
+   prints nothing before or after, and the build below compiles without
+   the deleted function or file.
+3. **The project's own checks still pass**, the same four from my ship
+   manifest that passed on `main` before I changed anything:
+   `npm ci && npm run build` in `studio/frontend` (exit 0, only the
+   existing chunk-size warning), then `go vet ./...` (exit 0),
+   `go build ./...` (exit 0), and `go test ./...` in `studio/`
+   (`ok .../studio 10.573s`, `ok .../studio/e2e`). `gofmt -l` lists no
+   files.
+
+No unit test was added: there's no behavior to pin, and a test that a
+function doesn't exist would be the compiler's job. The full output is
+in my PR description.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: my ship manifest's four checks, run by hand on `main` and
+  then on my branch, plus the before and after searches from my
+  reproduction.
+- What it produced: identical passing checks before and after, and
+  searches that find both leftovers on `main` and neither on my branch.
+- Difficulties: my first after-run looked like a failure:
+  `git grep discoveryContext` matched my own CHANGELOG line. And my
+  "before" `app.css` search printed nothing, which proved nothing,
+  since the file was unreferenced before the fix too.
+- What changed: I limited both searches to `studio/` and added an
+  `ls` of `app.css` before and after, so each piece of evidence can
+  actually tell the two states apart.
 
 ---
 
 ## Implementation Notes
 
-[A running log, added to as you work. Date each entry. What you
-built, decisions you made when you made them, wrong turns included.]
+**2026-10-30**
 
-**[Date]**
+Forked and cloned the repo, installed Go with Homebrew, and hit the
+build order trap: `go vet` in `studio/` fails until the frontend is
+built, because `main.go` embeds `frontend/dist`. Confirmed on `main`
+that two of the three leftovers are still there and the `go.mod` one
+was removed in #477. Baseline: all four checks pass.
 
-[Entry]
+**2026-10-30**
 
-**[Date]**
+Traced both leftovers with `git log`: `discoveryContext` came in with
+#86 and was never called (`Start()` builds its own context), and
+`app.css` came in with #77 and was never imported. Wrote the plan;
+plan-check held it until I pasted real baseline output and named
+risks, and it caught that a repo-wide `app.css` search would match my
+CHANGELOG line.
 
-[Entry]
+**2026-10-30**
+
+Built the fix on `fix/401-studio-dead-code`: remove `discoveryContext`
+and the `time` import only it used, delete `app.css`, and add a
+CHANGELOG entry. Claude Code first made these edits and committed
+them as three separate commits without asking me. I had it reset, then
+started a fresh branch from `main`, made the deletions myself from
+what the issue asks for, kept Claude's drafted CHANGELOG entry because
+it still matched my change, and made one signed-off commit
+(`git commit -s`, per the DCO rule), since the whole fix is one small
+cleanup. I then amended it to sign off as David Z with my GitHub
+noreply address, to keep my personal email out of public history. For the CHANGELOG I used a
+`### Removed` heading: the repo says it follows Keep a Changelog, which
+defines that section, but it has never actually used it, so I flagged
+that as a risk.
+
+**2026-10-30**
+
+On the branch, a repo-wide `git grep discoveryContext` matched my own
+CHANGELOG line, the same trap as `app.css`. Limited it to `studio/`,
+added an `ls` of `app.css` before and after, and recorded the change
+as a deviation under Implementation Plan. All four checks pass on the
+branch.
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded, for
+  the edits, commits, and evidence runs.
+- What it produced: a first version of the fix (which I discarded,
+  then made the deletions myself from the issue), a CHANGELOG entry I
+  kept because it still matched my change, and `test_evidence.md`.
+- Difficulties: it went ahead and built and committed the fix as
+  three commits when I wanted to make the change myself, and the
+  evidence searches tripped over my own CHANGELOG line.
+- What changed: I reset to a fresh branch, made the deletions and one
+  commit myself, and scoped the searches to `studio/`.
 
 ---
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when opened]
+**PR Link:** https://github.com/AlphaWaveSystems/flutter-probe/pull/519
 
-**PR Description:** [what the PR says; much of the content above
-adapts into it]
+**PR Description:** "chore(studio): remove unused discoveryContext and
+app.css", opened 2026-10-30. It says `Fixes #401`, explains that
+`discoveryContext` (added in #86) was never called and `app.css` (added
+in #77) was never imported, and notes the `go.mod` item was already
+handled in #477. It shows before and after searches, the checks passing
+on my branch (`npm run build`, `go vet`, `go build`, `go test`,
+`make test`), why `flutter test` wasn't run, an AI use section, and the
+repo's full PR template checklist with N/A reasons for the sections
+that don't apply. After opening it, I signed the project's CLA with a
+comment on the PR, and the `cla` check passed.
 
 **Maintainer Feedback:**
 
-- [Date]: [feedback received, or "none yet"; silence is a normal
-  state and costs you nothing]
-- [Date]: [how you addressed it]
+- 2026-10-30: none yet (PR opened today).
 
-**Status:** [Awaiting review / Iterating / Merged / Closed. The
-status is a fact you record, never a grade: the PR is graded as
-opened.]
+**Status:** Awaiting review
 
 **Toolkit**
 
-- Tool:
-- What it produced:
-- Difficulties:
-- What changed:
+- Tool: the ship-gate, which ran my manifest's checks and then my
+  pr-precheck on my branch, plan, evidence, and description, plus my
+  voice guard on the description.
+- What it produced: a reject on the first run (`make test` and
+  `flutter test` missing from my evidence, DCO sign-off unclear), then
+  PASS after I fixed those, with notes I also acted on: a line claiming
+  every check had passed on `main` when I'd only shown two, and a stale
+  branch name in my evidence and plan.
+- Difficulties: pr-precheck only read one-line commit titles, so it
+  couldn't see my sign-off until I pasted it, and it can't run
+  `flutter test` (no Flutter SDK). My voice guard stopped the
+  description twice: once for a "checks pass" line with no output
+  shown, and once for an AI disclosure without "I reviewed every line".
+- What changed: added `make test` to my manifest and moved
+  `flutter test` to the excluded table with a dated reason, fixed both
+  description lines, and recorded the branch rename as a plan
+  deviation.
 
 ---
 
