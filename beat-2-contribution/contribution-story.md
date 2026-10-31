@@ -55,10 +55,17 @@ happened; these entries are the toolkit's own timeline.
 All four entries are graded. Keep every heading below, and fill each
 one in the week it belongs to.
 
-**Unit 5: [one line on the tool work]**
+**Unit 5: Turned my issue-select skill into a scout that searches all of GitHub**
 
-[2-4 sentences: what you built (the scout, your strategy), what broke
-or fell short, what changed because of it.]
+I wrote four `gh search issues` queries from my fit profile and eight
+ranking rules, then ran one scan that graded the top five of 387
+results. Three of the five were already claimed through a comment or
+an open linked PR that `--no-assignee` can't see, so I added
+`-linked:pr` to every query. The one strong-looking accept,
+code-charity/youtube#2600, turned out to be from 2024 with no
+maintainer reply ever; a cross-link comment had bumped its update date
+past my 30-day filter, so I dropped it and now check myself that a
+maintainer opened or answered an issue before trusting a pick.
 
 **Unit 6: [one line on the tool work]**
 
