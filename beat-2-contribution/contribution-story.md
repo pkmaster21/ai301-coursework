@@ -92,10 +92,18 @@ passed; my voice guard then caught two lines in the description that
 claimed more than my pasted evidence showed or left out that I'd
 reviewed the code.
 
-**Unit 8: [one line on the tool work]**
+**Unit 8: Installed the PR monitor and wrote a playbook for flutter-probe**
 
-[2-4 sentences: the PR-monitor and your playbook. What it read, what it
-drafted, what you did with the draft.]
+The monitor read PR #519 six days after I opened it: one passing check,
+no reviews, and two comments, the CLA bot's and my own CLA signature.
+It drafted a wait note, not a reply, and I sent nothing, because no
+maintainer has said anything yet and my 7-day first-response threshold
+hadn't passed. What fell short: `--state` labeled the PR FEEDBACK-IN
+both times I ran it, because the monitor doesn't filter out bots and
+the CLA bot's comment came after my last commit. The draft only came
+out right because my playbook already says a bot comment is not review
+feedback, so I'm keeping that rule and I check the run report's state
+against the actual thread instead of trusting the label.
 
 ---
 
@@ -362,7 +370,7 @@ to test. Instead, three things have to be observable:
 1. **The leftovers are gone.** Before the fix, on `main` at 26716d5,
    `git grep -n discoveryContext -- studio/` prints the definition at
    `studio/wifi_discovery.go:127` and `ls studio/frontend/src/app.css`
-   finds the file. After the fix, on `fix/401-studio-dead-code`, the
+   finds the file. After the fix, on `fix/studio-dead-code`, the
    grep prints nothing (exit 1) and `ls` reports "No such file or
    directory". Both searches are limited to `studio/` because my
    CHANGELOG line names both items.
@@ -441,6 +449,14 @@ added an `ls` of `app.css` before and after, and recorded the change
 as a deviation under Implementation Plan. All four checks pass on the
 branch.
 
+**2026-11-06**
+
+Ran the PR monitor on `fix/studio-dead-code`. No maintainer activity
+yet, checks still green, and the branch is now behind `main` but still
+mergeable with no conflicts. I left the branch alone for now: a rebase
+isn't needed to merge, and if I rebase later I'll re-run every manifest
+check before force-pushing.
+
 **Toolkit**
 
 - Tool: Claude Code in my clone, with `CLAUDE.local.md` loaded, for
@@ -473,7 +489,9 @@ comment on the PR, and the `cla` check passed.
 
 **Maintainer Feedback:**
 
-- 2026-10-30: none yet (PR opened today).
+- 2026-11-06: none yet. Six days after opening, the only comments are
+  the CLA bot's and my CLA signature; no review has been requested
+  back or submitted.
 
 **Status:** Awaiting review
 
@@ -503,25 +521,69 @@ comment on the PR, and the `cla` check passed.
 
 **Technical Skills Gained**
 
-[What you learned technically, named concretely.]
+- Reading Go I didn't write: following a function's history with
+  `git log` to show it never had a caller, and learning that `go vet`
+  doesn't report unused functions, so `git grep` had to be the proof.
+- How Go's `embed` affects build order: `studio/main.go` embeds
+  `frontend/dist`, so `go vet`, `go build`, and `go test` all fail
+  until the frontend is built.
+- Writing evidence that tells two states apart: scoping searches to
+  `studio/` so my own CHANGELOG line can't match, and adding an `ls`
+  before and after because an empty search on `main` proved nothing.
+- A real project's contribution rules: DCO sign-off with
+  `git commit -s`, a CLA signed by comment, the PR template's
+  checklist, and a Keep a Changelog entry.
+- Putting the tools I built in class to work on a real repo, one per
+  phase: issue-scout to pick the issue, repro-check on my claim and
+  repro report, plan-check on my plan, pr-precheck and my ship manifest
+  (through the ship-gate) before opening the PR, my voice guard on
+  everything I posted, and the PR monitor afterward. Each one caught
+  something I'd missed (a claimed issue, a search that matched my own
+  CHANGELOG line, missing `make test` evidence, an overclaiming line),
+  and running them on real work showed me where they fall short, like
+  the scout not checking maintainer engagement and the monitor counting
+  a bot comment as feedback.
 
 **Challenges Overcome**
 
-[What was hard and how you solved it; point at the real events, the
-Toolkit blocks above are full of them.]
+- The build failed before I changed anything (`pattern
+  all:frontend/dist: no matching files found`). Reading `main.go`
+  showed the embed, and building the frontend first fixed it.
+- Part of the issue was already done: #477 removed the `go.mod` line
+  after the issue was filed. I confirmed it in the file's history and
+  said so in my claim and PR instead of pretending to fix it.
+- Claude Code built and committed the fix as three commits before I
+  wanted it to. I reset, started a fresh branch, made the deletions
+  myself, and made one signed-off commit.
+- My pr-precheck rejected the first PR because my evidence was missing
+  `make test` and my sign-off wasn't visible. I added the check to my
+  manifest, gave a dated reason for skipping `flutter test`, and pasted
+  the evidence.
 
 **What I'd Do Differently Next Time**
 
-[Reflection on your process.]
+- Set my commit name and noreply email before the first commit. I
+  amended twice, and the earlier pushed commits still show on the
+  issue's timeline.
+- Check whether a maintainer has ever engaged with an issue before
+  trusting a scout accept, and check the upstream history for each
+  item in the issue before claiming it.
+- Tell Claude Code up front which steps are mine to do (edits and
+  commits), instead of correcting it after it has already acted.
 
 ---
 
 ## Resources Used
 
-[What actually helped, not a reading list. List things this story
-already shows you using: the doc you followed to set the environment
-up, the thread that explained the bug, the person who answered you.
-One real entry beats ten plausible ones.]
-
-- [Link to documentation that helped]
-- [Discussion, issue, or post that helped]
+- flutter-probe's CONTRIBUTING.md
+  (https://github.com/AlphaWaveSystems/flutter-probe/blob/main/CONTRIBUTING.md):
+  the DCO sign-off rule, `make test`, and the branch naming guidance.
+- flutter-probe's PR template, which set the CHANGELOG requirement and
+  the checklist my description follows.
+- Keep a Changelog (https://keepachangelog.com/en/1.1.0/), which the
+  repo says it follows, for the `### Removed` section.
+- Upstream commit e958c3d (#477)
+  (https://github.com/AlphaWaveSystems/flutter-probe/commit/e958c3dfb9e779c3b60717337c68986dd5e33d5d),
+  which showed the `go.mod` item was already fixed.
+- The commits from #86 and #77, read with `git log`, which showed both
+  leftovers were dead from the start.
